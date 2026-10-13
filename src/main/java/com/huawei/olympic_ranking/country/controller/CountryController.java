@@ -1,35 +1,30 @@
 package com.huawei.olympic_ranking.country.controller;
 
 import com.huawei.olympic_ranking.common.model.response.BaseResponse;
-import com.huawei.olympic_ranking.country.model.Country;
-import com.huawei.olympic_ranking.country.model.mapper.CountryApplicationMapper;
+import com.huawei.olympic_ranking.common.model.response.ErrorResponse;
 import com.huawei.olympic_ranking.country.model.request.CountryCreateRequest;
 import com.huawei.olympic_ranking.country.model.response.CountryResponse;
-import com.huawei.olympic_ranking.country.service.CountryUseCase;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
 
-@RestController
-@RequestMapping("/api/countries")
-@RequiredArgsConstructor
-public class CountryController {
+@Tag(name = "Countries", description = "Ülke kayıt işlemleri")
+public interface CountryController {
 
-    private final CountryUseCase countryUseCase;
-    private final CountryApplicationMapper countryMapper;
-
-    @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public BaseResponse<CountryResponse> create(@Valid @RequestBody final CountryCreateRequest request) {
-
-        final Country created = countryUseCase.create(request.name(), request.code());
-
-        return BaseResponse.success(countryMapper.toResponse(created));
-    }
+    @Operation(summary = "Ülke oluşturur", description = "Ülke kodu 3 harfli olmalıdır; büyük/küçük harf duyarsızdır ve büyük harfe normalize edilir (ör. tur → TUR).")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Ülke oluşturuldu"),
+            @ApiResponse(responseCode = "400", description = "Eksik alan, geçersiz ülke kodu, 100 karakteri aşan ad veya bozuk istek gövdesi", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "409", description = "Ülke kodu zaten kayıtlı", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    BaseResponse<CountryResponse> create(@Valid @RequestBody CountryCreateRequest request);
 
 }

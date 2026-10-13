@@ -1,6 +1,7 @@
 package com.huawei.olympic_ranking.common.model.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.ConstraintViolation;
 import lombok.Builder;
 import lombok.Getter;
@@ -17,37 +18,50 @@ import java.util.Set;
 
 @Getter
 @Builder
+@Schema(description = "Hata yanıtı")
 public class ErrorResponse {
 
+    @Schema(description = "Hatanın üretildiği zaman", example = "2024-08-15T10:30:00")
     @Builder.Default
     private final LocalDateTime timestamp = LocalDateTime.now();
 
+    @Schema(description = "Makine tarafından okunabilir hata kodu", example = "ATH_003")
     private String code;
 
+    @Schema(description = "Hata başlığı", example = "ATHLETE_NOT_FOUND")
     private String header;
 
+    @Schema(description = "İnsan tarafından okunabilir hata mesajı", example = "Athlete not found with id: 99")
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private String message;
 
+    @Schema(description = "Hata yanıtlarında her zaman false", example = "false")
     @Builder.Default
     private final Boolean isSuccess = false;
 
+    @Schema(description = "İsteğin yolu", example = "/api/medals")
     private String path;
 
+    @Schema(description = "Alan bazlı doğrulama ayrıntıları; yalnızca doğrulama hatalarında bulunur")
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private List<SubError> subErrors;
 
     @Getter
     @Builder
+    @Schema(description = "Alan bazlı hata ayrıntısı")
     public static class SubError {
 
+        @Schema(description = "Alana ait hata mesajı", example = "name is required")
         private String message;
 
+        @Schema(description = "Hatalı alanın adı", example = "name")
         private String field;
 
+        @Schema(description = "Reddedilen değer", example = " ")
         @JsonInclude(JsonInclude.Include.NON_NULL)
         private Object value;
 
+        @Schema(description = "İhlal edilen kısıt veya beklenen tip", example = "NotBlank")
         @JsonInclude(JsonInclude.Include.NON_NULL)
         private String type;
 
