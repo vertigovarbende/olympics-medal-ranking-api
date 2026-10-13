@@ -24,7 +24,10 @@ public record CountryRankingItem(
         long bronze,
 
         @Schema(description = "Toplam madalya sayısı", example = "2")
-        long total
+        long total,
+
+        @Schema(description = "Ağırlıklı puan: altın 3, gümüş 2, bronz 1 (her iki stratejide de döner)", example = "5")
+        long points
 
 ) {
 

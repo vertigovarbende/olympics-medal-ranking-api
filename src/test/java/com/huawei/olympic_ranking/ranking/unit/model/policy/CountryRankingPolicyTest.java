@@ -2,6 +2,7 @@ package com.huawei.olympic_ranking.ranking.unit.model.policy;
 
 import com.huawei.olympic_ranking.country.model.Country;
 import com.huawei.olympic_ranking.country.testsupport.CountryBuilder;
+import com.huawei.olympic_ranking.ranking.model.RankingStrategy;
 import com.huawei.olympic_ranking.ranking.model.Standing;
 import com.huawei.olympic_ranking.ranking.model.policy.CountryRankingPolicy;
 import com.huawei.olympic_ranking.ranking.testsupport.StandingBuilder;
@@ -19,6 +20,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 class CountryRankingPolicyTest {
 
     private final CountryRankingPolicy policy = new CountryRankingPolicy();
+
+    @Test
+    @DisplayName("strategy() OFFICIAL doner")
+    void shouldReturnOfficialStrategy() {
+
+        assertThat(this.policy.strategy()).isEqualTo(RankingStrategy.OFFICIAL);
+
+    }
 
     @Test
     @DisplayName("order() once altin sayisina bakar; toplami cok olan ulke bile az altinla geride kalir")

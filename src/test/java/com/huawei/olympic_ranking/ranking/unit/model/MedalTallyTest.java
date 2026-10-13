@@ -22,6 +22,26 @@ class MedalTallyTest {
 
     }
 
+    @Test
+    @DisplayName("weightedPoints() altin 3, gumus 2, bronz 1 puanla hesaplar")
+    void shouldCalculateWeightedPoints_WhenMedalsExist() {
+
+        final MedalTally tally = new MedalTally(2, 3, 4);
+
+        assertThat(tally.weightedPoints()).isEqualTo(16);
+
+    }
+
+    @Test
+    @DisplayName("weightedPoints() madalya yoksa sifir verir")
+    void shouldReturnZeroPoints_WhenNoMedals() {
+
+        final MedalTally tally = new MedalTally(0, 0, 0);
+
+        assertThat(tally.weightedPoints()).isZero();
+
+    }
+
     @ParameterizedTest
     @CsvSource({"1, 0, 0", "0, 1, 0", "0, 0, 1"})
     @DisplayName("hasMedals() en az bir madalya varsa true doner")
