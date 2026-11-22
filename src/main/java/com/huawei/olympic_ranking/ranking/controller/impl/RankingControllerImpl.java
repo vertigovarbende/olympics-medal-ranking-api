@@ -2,6 +2,7 @@ package com.huawei.olympic_ranking.ranking.controller.impl;
 
 import com.huawei.olympic_ranking.common.model.response.BaseResponse;
 import com.huawei.olympic_ranking.ranking.controller.RankingController;
+import com.huawei.olympic_ranking.ranking.model.RankingStrategy;
 import com.huawei.olympic_ranking.ranking.model.mapper.RankingApplicationMapper;
 import com.huawei.olympic_ranking.ranking.model.response.AthleteRankingItem;
 import com.huawei.olympic_ranking.ranking.model.response.CountryRankingItem;
@@ -24,8 +25,8 @@ public class RankingControllerImpl implements RankingController {
 
     @Override
     @GetMapping("/countries")
-    public BaseResponse<List<CountryRankingItem>> countries() {
-        return BaseResponse.success(rankingMapper.toCountryItems(rankingUseCase.rankCountries()));
+    public BaseResponse<List<CountryRankingItem>> countries(final RankingStrategy strategy) {
+        return BaseResponse.success(rankingMapper.toCountryItems(rankingUseCase.rankCountries(strategy)));
     }
 
     @Override

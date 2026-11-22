@@ -71,7 +71,24 @@ class OpenApiDocumentationIT extends TestContainerConfiguration {
                 .andExpect(jsonPath("$.paths['/api/medals'].post.responses['400']").exists())
                 .andExpect(jsonPath("$.paths['/api/medals'].post.responses['404']").exists())
                 .andExpect(jsonPath("$.paths['/api/medals'].post.responses['409'].content['application/json'].schema").exists())
-                .andExpect(jsonPath("$.paths['/api/rankings/countries'].get.responses['200']").exists());
+                .andExpect(jsonPath("$.paths['/api/rankings/countries'].get.responses['200']").exists())
+                .andExpect(jsonPath("$.paths['/api/rankings/countries'].get.responses['400']").exists());
+
+    }
+
+    @Test
+    @DisplayName("GET /v3/api-docs ulke siralamasinin strateji parametresini varsayilan degeriyle belgeler")
+    void shouldDocumentStrategyParameter_WhenApiDocsRequested() throws Exception {
+
+        // Given: strategy sorgu parametresi alan ulke siralamasi
+        // When: GET /v3/api-docs
+        final ResultActions result = this.mockMvc.perform(get(API_DOCS));
+
+        // Then: parametre adi, konumu ve varsayilan degeri belgelenir
+        result.andExpect(status().isOk())
+                .andExpect(jsonPath("$.paths['/api/rankings/countries'].get.parameters[0].name").value("strategy"))
+                .andExpect(jsonPath("$.paths['/api/rankings/countries'].get.parameters[0].in").value("query"))
+                .andExpect(jsonPath("$.paths['/api/rankings/countries'].get.parameters[0].schema.default").value("OFFICIAL"));
 
     }
 

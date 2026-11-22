@@ -55,6 +55,7 @@ class RankingControllerIT extends TestContainerConfiguration {
                 .andExpect(jsonPath("$.response[0].silver").value(1))
                 .andExpect(jsonPath("$.response[0].bronze").value(0))
                 .andExpect(jsonPath("$.response[0].total").value(2))
+                .andExpect(jsonPath("$.response[0].points").value(5))
                 .andExpect(jsonPath("$.response[1].rank").value(2))
                 .andExpect(jsonPath("$.response[1].countryCode").value(SampleData.USA))
                 .andExpect(jsonPath("$.response[1].gold").value(1))
@@ -71,25 +72,7 @@ class RankingControllerIT extends TestContainerConfiguration {
     void shouldReturnCountriesRankedByGoldFirst_WhenUsaHasMoreGold() throws Exception {
 
         // Given: USA (2G, 1S) ve TUR (1G, 3S)
-        this.sampleData.loadCountries();
-        this.sampleData.loadSports();
-        this.sampleData.loadAthletes();
-
-        final Long mete = this.sampleData.athleteId(SampleData.METE_GAZOZ);
-        final Long noah = this.sampleData.athleteId(SampleData.NOAH_LYLES);
-        final Long abby = this.sampleData.athleteId(SampleData.ABBY_STEUTER);
-
-        final Long archery = this.sampleData.sportId(SampleData.ARCHERY);
-        final Long swimming = this.sampleData.sportId(SampleData.SWIMMING);
-        final Long judo = this.sampleData.sportId(SampleData.JUDO);
-
-        this.medalUseCase.create(noah, swimming, MedalType.GOLD);
-        this.medalUseCase.create(abby, swimming, MedalType.GOLD);
-        this.medalUseCase.create(noah, judo, MedalType.SILVER);
-        this.medalUseCase.create(mete, archery, MedalType.GOLD);
-        this.medalUseCase.create(mete, archery, MedalType.SILVER);
-        this.medalUseCase.create(mete, swimming, MedalType.SILVER);
-        this.medalUseCase.create(mete, judo, MedalType.SILVER);
+        this.loadUsaAndTurkeyScenario();
 
         // When: GET /api/rankings/countries
         final ResultActions result = getRanking("countries");
@@ -103,6 +86,104 @@ class RankingControllerIT extends TestContainerConfiguration {
                 .andExpect(jsonPath("$.response[1].countryCode").value(SampleData.TUR))
                 .andExpect(jsonPath("$.response[1].gold").value(1))
                 .andExpect(jsonPath("$.response[1].silver").value(3));
+
+    }
+
+    @Test
+    @DisplayName("GET /api/rankings/countries?strategy=OFFICIAL resmi kurala gore siralar ve puani da doner")
+    void shouldReturnOfficialOrder_WhenStrategyIsOfficial() throws Exception {
+
+        // Given: USA (2G, 1S) ve TUR (1G, 3S)
+        this.loadUsaAndTurkeyScenario();
+
+        // When: GET /api/rankings/countries?strategy=OFFICIAL
+        final ResultActions result = getCountries("OFFICIAL");
+
+        // Then: resmi kuralda USA 1., TUR 2.; puan her iki stratejide de doner
+        result.andExpect(status().isOk())
+                .andExpect(jsonPath("$.response[0].countryCode").value(SampleData.USA))
+                .andExpect(jsonPath("$.response[0].points").value(8))
+                .andExpect(jsonPath("$.response[1].countryCode").value(SampleData.TUR))
+                .andExpect(jsonPath("$.response[1].points").value(9));
+
+    }
+
+    @Test
+    @DisplayName("GET /api/rankings/countries?strategy=WEIGHTED agirlikli puana gore siralar")
+    void shouldReturnCountriesRankedByWeightedPoints_WhenStrategyIsWeighted() throws Exception {
+
+        // Given: USA (2G, 1S = 8 puan) ve TUR (1G, 3S = 9 puan)
+        this.loadUsaAndTurkeyScenario();
+
+        // When: GET /api/rankings/countries?strategy=WEIGHTED
+        final ResultActions result = getCountries("WEIGHTED");
+
+        // Then: resmi kuralin tersine TUR 1., USA 2.
+        result.andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.response.length()").value(2))
+                .andExpect(jsonPath("$.response[0].rank").value(1))
+                .andExpect(jsonPath("$.response[0].countryCode").value(SampleData.TUR))
+                .andExpect(jsonPath("$.response[0].points").value(9))
+                .andExpect(jsonPath("$.response[1].rank").value(2))
+                .andExpect(jsonPath("$.response[1].countryCode").value(SampleData.USA))
+                .andExpect(jsonPath("$.response[1].points").value(8));
+
+    }
+
+    @Test
+    @DisplayName("GET /api/rankings/countries?strategy=WEIGHTED ornek veride TUR, USA, JPN sirasini doner")
+    void shouldReturnSampleDataOrder_WhenStrategyIsWeightedAndSampleDataLoaded() throws Exception {
+
+        // Given: isterdeki ornek veri (TUR 5 puan, USA 4 puan, JPN 3 puan)
+        this.sampleData.loadAll();
+
+        // When: GET /api/rankings/countries?strategy=WEIGHTED
+        final ResultActions result = getCountries("WEIGHTED");
+
+        // Then: puanlar sirayi belirler
+        result.andExpect(status().isOk())
+                .andExpect(jsonPath("$.response[0].countryCode").value(SampleData.TUR))
+                .andExpect(jsonPath("$.response[0].points").value(5))
+                .andExpect(jsonPath("$.response[1].countryCode").value(SampleData.USA))
+                .andExpect(jsonPath("$.response[1].points").value(4))
+                .andExpect(jsonPath("$.response[2].countryCode").value(SampleData.JPN))
+                .andExpect(jsonPath("$.response[2].points").value(3));
+
+    }
+
+    @Test
+    @DisplayName("GET /api/rankings/countries?strategy=WEIGHTED madalya yoksa bos liste doner")
+    void shouldReturnEmptyList_WhenStrategyIsWeightedAndNoMedalsAwarded() throws Exception {
+
+        // Given: ornek ulkeler kayitli ama hic madalya verilmemis
+        this.sampleData.loadCountries();
+
+        // When: GET /api/rankings/countries?strategy=WEIGHTED
+        final ResultActions result = getCountries("WEIGHTED");
+
+        // Then: 200 OK ve bos liste
+        result.andExpect(status().isOk())
+                .andExpect(jsonPath("$.response").isEmpty());
+
+    }
+
+    @Test
+    @DisplayName("GET /api/rankings/countries gecersiz stratejide 400 doner ve alani bildirir")
+    void shouldReturnBadRequest_WhenStrategyIsInvalid() throws Exception {
+
+        // Given: tanimli olmayan strateji degeri
+        final String strategy = "FOO";
+
+        // When: GET /api/rankings/countries?strategy=FOO
+        final ResultActions result = getCountries(strategy);
+
+        // Then: 400 Bad Request, VALIDATION_ERROR ve "strategy" alani
+        result.andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("GEN_002"))
+                .andExpect(jsonPath("$.subErrors.length()").value(1))
+                .andExpect(jsonPath("$.subErrors[0].field").value("strategy"))
+                .andExpect(jsonPath("$.subErrors[0].value").value("FOO"));
 
     }
 
@@ -243,6 +324,34 @@ class RankingControllerIT extends TestContainerConfiguration {
 
     private ResultActions getRanking(final String type) throws Exception {
         return this.mockMvc.perform(get(PATH + "/" + type));
+    }
+
+    private ResultActions getCountries(final String strategy) throws Exception {
+        return this.mockMvc.perform(get(PATH + "/countries").param("strategy", strategy));
+    }
+
+    private void loadUsaAndTurkeyScenario() {
+
+        this.sampleData.loadCountries();
+        this.sampleData.loadSports();
+        this.sampleData.loadAthletes();
+
+        final Long mete = this.sampleData.athleteId(SampleData.METE_GAZOZ);
+        final Long noah = this.sampleData.athleteId(SampleData.NOAH_LYLES);
+        final Long abby = this.sampleData.athleteId(SampleData.ABBY_STEUTER);
+
+        final Long archery = this.sampleData.sportId(SampleData.ARCHERY);
+        final Long swimming = this.sampleData.sportId(SampleData.SWIMMING);
+        final Long judo = this.sampleData.sportId(SampleData.JUDO);
+
+        this.medalUseCase.create(noah, swimming, MedalType.GOLD);
+        this.medalUseCase.create(abby, swimming, MedalType.GOLD);
+        this.medalUseCase.create(noah, judo, MedalType.SILVER);
+        this.medalUseCase.create(mete, archery, MedalType.GOLD);
+        this.medalUseCase.create(mete, archery, MedalType.SILVER);
+        this.medalUseCase.create(mete, swimming, MedalType.SILVER);
+        this.medalUseCase.create(mete, judo, MedalType.SILVER);
+
     }
 
     private void award(final Long athleteId, final Long sportId, final MedalType... types) {

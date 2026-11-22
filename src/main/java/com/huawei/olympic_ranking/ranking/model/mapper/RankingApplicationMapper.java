@@ -26,7 +26,8 @@ public class RankingApplicationMapper {
                 tally.gold(),
                 tally.silver(),
                 tally.bronze(),
-                tally.total());
+                tally.total(),
+                tally.weightedPoints());
     }
 
     public List<CountryRankingItem> toCountryItems(final Ranking<Country> ranking) {
